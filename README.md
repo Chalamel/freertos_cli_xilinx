@@ -1,5 +1,5 @@
 # FreeRTOS + CLI providing address-space access to Xilinx devices
-This repository contains a simple implementation of the FreeRTOS command line interface (CLI) for use with Xilinx devices, defining commands that provide access to the AXI address space of such a device via any terminal. It runs without modification on MicroBlaze or Zynq systems.
+This repository contains a simple implementation of the FreeRTOS command line interface (CLI) for use with Xilinx devices, defining commands that provide access to the AXI address space of such a device via any terminal.
 
 # Commands
   - wr <*addr*> <*val*>
@@ -24,6 +24,8 @@ static const CLI_Command_Definition_t my_cmd = {
     <func_ptr_to_my_cmd_handler>,
     <number_of_arguments>
 };
+
+const CLI_Command_Definition_t* my_cmd_type_ptr = &my_cmd;
 ```
 
 Then define the command handler function. The main function that is defined for the
@@ -59,26 +61,29 @@ BaseType_t my_cmd_handler(uint8_t *wr_buf, size_t wr_buf_len, const char *cmd_st
 
 Register the newly defined command with the CLI:
 ```c
-BaseType_t FreeRTOS_CLIRegisterCommand(const CLI_Command_Definition_t * const pxCommandToRegister)
-```
+#include "FreeRTOS_CLI.h"
 
-Where ```pxCommandToRegister``` is a pointer to the defined command. After
-registering, the command can be used. For a more detailed description of the
-FreeRTOS CLI functionality, see FreeRTOS.org.
+. . .
+
+FreeRTOS_CLIRegisterCommand(my_cmd_type_ptr)
+```
+After registering, the command can be used. For a more detailed description of
+the FreeRTOS CLI functionality, see FreeRTOS.org.
 
 
 # Including in a project
-Include the source file and header cli.c and cli.h in a FreeRTOS-based project.
-It is assumed that there is an already-configured source of input data (for
-instance a socket- or UART interface) that posts any data it receives to the
-FreeRTOS queue ``` extern QueueHandle_t cli_input_buf ``` (this should be
-replaced with a FreeRTOS StreamBuffer if using a FreeRTOS version past v10.0),
-and an associated function ``` void cli_send(const u8 *reply, u16 num_bytes)```.
-The files uart_16500.c and uart_zynq.c along with their headers can be used if a
-design includes the AXI UART16550 core, or if a Zynq device is used,
-respectively, which contain initialization routines and ISRs for the two UART
-types. The FreeRTOS source file FreeRTOS_CLI.c and header FreeRTOS_CLI.h are
-also required, which are available from FreeRTOS.org.
+Include the source files in the base *src/embedded* directory in a
+FreeRTOS-based project. It is assumed that there is an already-configured source
+of input data (for instance a socket- or UART interface) that posts any data it
+receives to the FreeRTOS queue ``` extern QueueHandle_t cli_input_buf ``` (this
+should be replaced with a FreeRTOS StreamBuffer if using a FreeRTOS version past
+v10.0), and an associated function ``` void cli_send(const u8 *reply, u16
+num_bytes)```. The files uart_16500.c and uart_zynq.c along with their headers
+can be used if a design includes the AXI UART16550 core, or if a Zynq device is
+used, respectively, which contain initialization routines and ISRs for the two
+UART types; these are contained in *src/embedded/zynq* and
+*src/embedded/microblaze*. The FreeRTOS source file FreeRTOS_CLI.c and header
+FreeRTOS_CLI.h are also required, which are available from FreeRTOS.org.
 
 The CLI is handled by a task that is spawned like any other FreeRTOS task:
 
