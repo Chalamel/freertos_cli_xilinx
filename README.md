@@ -2,11 +2,11 @@
 This repository contains a simple implementation of the FreeRTOS command line interface (CLI) for use with Xilinx devices, defining commands that provide access to the AXI address space of such a device via any terminal.
 
 # Commands
-  - wr <*addr*> <*val*>
+  - **wr** <*addr*> <*val*>
     - Writes the value <*val*> to the address <*addr*> 
-  - rd <*addr*>
+  - **rd** <*addr*>
     - Returns the value stored at <*addr*>
-  - help
+  - **help**
     - Display available commands 
 
 Hex-encoded- and base-10 input is accepted for the parameters, and hex-encoded input
