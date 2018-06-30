@@ -20,7 +20,8 @@
 
 #include "cli.h"
 
-#include YOUR_UART_HEADER
+#include YOUR_UART_OR_SOCKET_HEADER
+
 
 #define MAX_INPUT_LENGTH 200 //<! Max allowable length of terminal input
 #define MAX_OUTPUT_LENGTH 200 //<! Max allowable length of terminal output (per call to command handler)
@@ -42,7 +43,7 @@ BaseType_t reg_cli_cmds() {
         xil_printf("Failed to add the write-command for the CLI.\n");
         return pdFAIL;
     }
-    
+
     return pdPASS;
 }
 
@@ -193,6 +194,7 @@ BaseType_t wr_addr_cli(s8 *wr_buf, size_t wr_buf_len, const s8 *cmd_str) {
 
     return pdFALSE; //Done
 }
+
 
 /**
  * @brief Checks if the input pointed to by data is on the form 0x<hex_chars>.

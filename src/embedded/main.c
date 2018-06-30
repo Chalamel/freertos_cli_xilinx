@@ -5,17 +5,14 @@
  * @author Karl Emil Sandvik Bohne
  */
 
-#include "sw_opts.h"
-#include "main.h"
-
 #include <stdio.h>
+
+#include "sw_opts.h"
 
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "task.h"
 #include "xparameters.h"
-
-#include "main.h"
 
 extern void cli_task(void* p);
 

@@ -9,6 +9,8 @@
 #ifndef SRC_SW_OPTS_H_
 #define SRC_SW_OPTS_H_
 
+#define DEFAULT_THREAD_PRIO 2
+
 #define UARTBAUDRATE 115200
 
 #define THREAD_STACKSIZE 2048

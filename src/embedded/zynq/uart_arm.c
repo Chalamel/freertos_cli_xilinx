@@ -1,5 +1,5 @@
 /*
- * @file uart_arm.c
+ * file uart_zynq.c
  * 
  * @brief Contains an initialization procedure and ISR for the
  *        Zynq / ARM UART core
@@ -9,9 +9,7 @@
 
 #include "xparameters.h"
 #include "xil_types.h"
-#include "xuartps.h"	
-
-#include "uart_arm.h"
+#include "xuartps.h"
 
 #include "xscugic.h"
 
@@ -32,7 +30,7 @@ static u8 volatile in_transit;
  * @param event denotes the type of interrupt that triggered. See xuartns550.h
  * @param event_data if tx-/rx/timeout-interrupt: The number of bytes written/read/in rx-FIFO
  */
-static void uart_arm_isr(void *callback_ref, u32 event, unsigned int event_data)
+static void uart_ps_isr(void *callback_ref, u32 event, unsigned int event_data)
 {
 
     //rx- or timeout-interrupt: data in rx-FIFO
@@ -73,7 +71,7 @@ void uart_send(const u8 *reply, u16 num_bytes) {
 }
 
 
-int arm_uart_init() {
+int uart_init() {
 	XUartPs_Config *config;
 	u32 intr_mask;
 
@@ -87,12 +85,12 @@ int arm_uart_init() {
 	}
 
 	if(XUartPs_SetBaudRate(&uart_inst, UARTBAUDRATE) != XST_SUCCESS) {
-		xil_printf("Failed to set UART baudrate.\n")
+		xil_printf("Failed to set UART baudrate.\n");
 		return XST_FAILURE;
 	}
 
 	if (XUartPs_SelfTest(&uart_inst) != XST_SUCCESS) {
-		xil_printf("UART self test failed.\n")
+		xil_printf("UART self test failed.\n");
 		return XST_FAILURE;
 	}
 
