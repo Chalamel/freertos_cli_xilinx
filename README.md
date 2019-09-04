@@ -1,7 +1,7 @@
-# FreeRTOS + CLI providing address-space access to Xilinx devices
-This repository contains a simple implementation of the FreeRTOS command line interface (CLI) for use with Xilinx devices, defining commands that provide access to the AXI address space of such a device via any terminal.
+# FreeRTOS + CLI for remote access to device address-space 
+This repository contains an implementation of the FreeRTOS command line interface (CLI) as well as a user-implementable interface that together provide remote address-space access to any device on the condition that the device allows access to said space, and that a dedicated host-device communication interface, such as a UART or socket, is implemented and available.
 
-# Commands
+## Commands
   - **wr** <*addr*> <*val*>
     - Writes the value <*val*> to the address <*addr*> 
   - **rd** <*addr*>
@@ -9,18 +9,35 @@ This repository contains a simple implementation of the FreeRTOS command line in
   - **help**
     - Display available commands 
 
-Hex-encoded- and base-10 input is accepted for the parameters, and hex-encoded input
-must be identified by the initial sequence *0x*, e.g 0xDEADBEEF. It is expected
-that input is terminated with the linefeed character ```\n```, but a carriage
-return character followed by a linefeed character (```\r\n```) is also valid.
+Hex-encoded- and base-10 input is accepted, and hex-encoded input must be identified by the initial sequence *0x*, e.g 0xDEADBEEF. Input shall be terminated with the linefeed character ```\n```, but a carriage return character followed by a linefeed character (```\r\n```) is also valid.
 
-# Implementing additional commands
-..is easy. First define a command:
+## Including and using in a project
+- Include in a project the source- and header files from this repository, located in the *src/embedded* directory
+
+- Provide the three functions specified in cli.h that implement the interface between CLI and communication-interface (UART/socket, etc), that respectively transmits data using the communication-interface, and performs the actual write- and read operations:
+    ```c
+    extern uint32_t cli_send(char *data, uint32_t len);
+    
+    extern void cli_wr_addr(uint32_t addr, uint32_t val);
+    
+    extern uint32_t cli_rd_addr(uint32_t addr);
+    ```
+
+
+- The CLI is handled by a task that is spawned like any other FreeRTOS task. For instance:
+    ```c
+    TaskHandle_t cli_handle;
+    xTaskCreate(cli_task, "cli_task", CLI_TASK_STACKSIZE, NULL, CLI_TASK_PRIO, &cli_handle);
+    ```
+
+
+## Implementing additional commands
+Define a command:
 
 ```c
 static const CLI_Command_Definition_t my_cmd = {
-    "<my_cmd signature>", //e.g "rd" for the read-command
-    "<description of my_cmd>",
+    "<my_cmd signature>", //An identifier in the form of a string, e.g "rd" for the read-command
+    "<description of my_cmd>", //String-descrption of the command
     <func_ptr_to_my_cmd_handler>,
     <number_of_arguments>
 };
@@ -28,27 +45,25 @@ static const CLI_Command_Definition_t my_cmd = {
 const CLI_Command_Definition_t* my_cmd_type_ptr = &my_cmd;
 ```
 
-Then define the command handler function. The main function that is defined for the
-CLI task automatically calls the appropriate handler function depending on the
-received command signature. All handlers **must** take the parameters shown in
-the following example function:
+Then define the command handler function. The main CLI task function automatically calls the appropriate handler function depending on the received command signature. All handlers must take the parameters shown in the following example function:
 
 ```c
 /**
- * @brief Implements the my_cmd command
+ * Implements the my_cmd command
  *
  * @param *wr_buf A buffer into which any reply data is written
  * @param wr_buf_len The size of the buffer pointed to by *wr_buf
  * @param *cmd_str A string containing the received command
  */
 BaseType_t my_cmd_handler(uint8_t *wr_buf, size_t wr_buf_len, const char *cmd_str) {
-    //Parse command parameters (if any). In this case we pretend there is one:
+    //Parse command parameters (if any). In this case pretend there is one:
     BaseType_t p1_len; //The length of the received parameter
     const char *p1 = FreeRTOS_CLIGetParameter(cmd_str, 1, &p1_len)
     
     /* Do whatever, as defined by the received parameters, and write (zero-terminated) reply to wr_buf.
     If no reply is to be generated, zero-terminate wr_buf at index 0. In this case we simply echo back
-    the parameter by copying the received parameter to the reply buffer */
+    the parameter by copying the received parameter to the reply buffer. The reply is sent in the
+    cli_task() function */
     
     strcpy(p1, wr_buf);
 
@@ -61,33 +76,9 @@ BaseType_t my_cmd_handler(uint8_t *wr_buf, size_t wr_buf_len, const char *cmd_st
 
 Register the newly defined command with the CLI:
 ```c
-#include "FreeRTOS_CLI.h"
-
+#include <FreeRTOS_CLI.h>
 . . .
-
+//Somewhere before using the command
 FreeRTOS_CLIRegisterCommand(my_cmd_type_ptr)
 ```
-After registering, the command can be used. For a more detailed description of
-the FreeRTOS CLI functionality, see FreeRTOS.org.
-
-
-# Including in a project
-Include the source files in the base *src/embedded* directory in a
-FreeRTOS-based project. It is assumed that there is an already-configured source
-of input data (for instance a socket- or UART interface) that posts any data it
-receives to the FreeRTOS queue ``` extern QueueHandle_t cli_input_buf ``` (this
-should be replaced with a FreeRTOS StreamBuffer if using a FreeRTOS version past
-v10.0), and an associated function ``` void cli_send(const u8 *reply, u16
-num_bytes)```. The files uart_16500.c and uart_zynq.c along with their headers
-can be used if a design includes the AXI UART16550 core, or if a Zynq device is
-used, respectively, which contain initialization routines and ISRs for the two
-UART types; these are contained in *src/embedded/zynq* and
-*src/embedded/microblaze*. The FreeRTOS source file FreeRTOS_CLI.c and header
-FreeRTOS_CLI.h are also required, which are available from FreeRTOS.org.
-
-The CLI is handled by a task that is spawned like any other FreeRTOS task:
-
-```c
-TaskHandle_t cli_handle = NULL;
-xTaskCreate(cli_task, "cli_main", THREAD_STACKSIZE, (void*) 0, CLI_THREAD_PRIO, &cli_handle); //We could allocate statically also.
-```
+For a more detailed description of the FreeRTOS CLI functionality, see FreeRTOS.org.
