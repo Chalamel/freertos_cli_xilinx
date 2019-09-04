@@ -1,10 +1,11 @@
-""" Class used to create a MainSerial object, which can be used to write- and read data from a given
-serial port """
+""" Class defines a serial interface. An object of this type can be used together with
+a ComsClient instance and the "FreeRTOS + CLI for remote address-space access" CLI
+"""
 
 import serial
 
-class MainSerial(object):
-    """ Creates a MainSerial object with the given parameters """
+class SerialObj(object):
+    """ Creates a SerialObj object with the given parameters """
     
 
     def __init__(self, port, baudrate, parity, stopbits, timeout):
@@ -34,9 +35,19 @@ class MainSerial(object):
             timeout=timeout,
         )
 
-        self.seq_num = 0
-
         if not self.ser.isOpen():
             raise RuntimeError("Could not open serial port. Exiting.")
         else:
             print("Serial configured and opened.")
+
+    def write(self, data: str):
+        """ Write "data" using the I/F """
+        self.ser.write(data)
+
+    def readline(self):
+        """ Return a line stored in the receive-buffer """
+        return self.ser.readline()[:-1]
+    
+    def readlines(self):
+        """ Return all lines stored in the receive-buffer """
+        return self.ser.readlines()
