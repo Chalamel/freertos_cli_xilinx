@@ -1,5 +1,5 @@
 # FreeRTOS + CLI for remote access to device address-space 
-This repository contains an implementation of the FreeRTOS command line interface (CLI) as well as a user-implementable interface that together provide remote address-space access to any device on the condition that a dedicated host-device communication interface, such as a UART or socket, and available.
+This repository contains an implementation of the FreeRTOS command line interface (CLI) as well as a user-implementable interface that together provide remote address-space access to any device on the condition that a dedicated host-device communication interface, such as a UART or socket, is available.
 
 ## Commands
   - **wr** <*addr*> <*val*>
